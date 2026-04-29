@@ -1,24 +1,35 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { Session } from '@supabase/supabase-js'
+import { Stack, useRouter, useSegments } from 'expo-router'
+import { useEffect, useState } from 'react'
+import 'react-native-url-polyfill/auto'
+import { supabase } from '../lib/supabase'
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [session, setSession] = useState<Session | null>(null)
+  const [initialized, setInitialized] = useState(false)
+  const router = useRouter()
+  const segments = useSegments()
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setInitialized(true)
+    })
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!initialized) return
+    const inAuthGroup = segments[0] === '(auth)'
+    if (!session && !inAuthGroup) {
+      router.replace('/(auth)/sign-in')
+    } else if (session && inAuthGroup) {
+      router.replace('/(tabs)')
+    }
+  }, [session, initialized])
+
+  return <Stack screenOptions={{ headerShown: false }} />
 }
