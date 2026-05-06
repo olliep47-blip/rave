@@ -40,7 +40,7 @@ export default function Feed() {
 
     const { data } = await supabase
       .from('posts')
-      .select('*, profiles(username)')
+      .select('*, profiles(username, avatar_url)')
       .in('user_id', followingIds)
       .order('created_at', { ascending: false })
 
@@ -97,7 +97,13 @@ export default function Feed() {
     return (
       <TouchableOpacity style={styles.post} onPress={() => router.push({ pathname: '/post-detail', params: { id: item.id } })} activeOpacity={0.85}>
         <View style={styles.postHeader}>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/user-profile', params: { id: item.user_id } })}>
+          <TouchableOpacity style={styles.userRow} onPress={() => router.push({ pathname: '/user-profile', params: { id: item.user_id } })}>
+            {item.profiles?.avatar_url
+              ? <Image source={{ uri: item.profiles.avatar_url }} style={styles.avatar} />
+              : <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitial}>{item.profiles?.username?.[0]?.toUpperCase()}</Text>
+                </View>
+            }
             <Text style={styles.username}>@{item.profiles?.username}</Text>
           </TouchableOpacity>
           <View style={styles.postHeaderRight}>
@@ -191,6 +197,10 @@ const styles = StyleSheet.create({
   post: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.background },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   postHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  userRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  avatar: { width: 28, height: 28, borderRadius: 14 },
+  avatarPlaceholder: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.surface, justifyContent: 'center', alignItems: 'center' },
+  avatarInitial: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
   username: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
   listBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radius.full },
   badgeRaved: { backgroundColor: Colors.ravedLight },

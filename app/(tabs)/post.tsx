@@ -2,8 +2,9 @@ import { decode } from 'base64-arraybuffer'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImagePicker from 'expo-image-picker'
 import * as Location from 'expo-location'
-import { useState } from 'react'
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { useRouter } from 'expo-router'
+import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { supabase } from '../../lib/supabase'
 
 const CATEGORIES = ['Eat', 'Drink', 'Do']
@@ -16,6 +17,36 @@ export default function Post() {
   const [onList, setOnList] = useState<boolean | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([])
+  const cityDebounce = useRef<any>(null)
+  const router = useRouter()
+
+  async function searchCity(text: string) {
+    setCity(text)
+    if (cityDebounce.current) clearTimeout(cityDebounce.current)
+    if (text.length < 2) { setCitySuggestions([]); return }
+    cityDebounce.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=5&addressdetails=1`,
+          { headers: { 'Accept-Language': 'en' } }
+        )
+        const data = await res.json()
+        const names = data.map((item: any) => {
+          const a = item.address
+          return a.city || a.town || a.village || a.county || a.state || item.display_name.split(',')[0]
+        }).filter((v: string, i: number, arr: string[]) => arr.indexOf(v) === i)
+        setCitySuggestions(names)
+      } catch (e) {
+        setCitySuggestions([])
+      }
+    }, 400)
+  }
+
+  function selectCity(name: string) {
+    setCity(name)
+    setCitySuggestions([])
+  }
 
   async function pickImages() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -113,8 +144,14 @@ export default function Post() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>New Rave</Text>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+      <View style={styles.headerRow}>
+        <Text style={styles.header}>New Rave</Text>
+        <TouchableOpacity onPress={() => router.push('/(tabs)')}>
+          <Text style={styles.cancelBtn}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.label}>Venue or place</Text>
       <TextInput
@@ -125,12 +162,28 @@ export default function Post() {
       />
 
       <Text style={styles.label}>City or area</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. South Hams, Paris, Tokyo"
-        value={city}
-        onChangeText={setCity}
-      />
+      <View style={styles.cityContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. South Hams, Paris, Tokyo"
+          value={city}
+          onChangeText={searchCity}
+          autoCapitalize="words"
+        />
+        {citySuggestions.length > 0 && (
+          <View style={styles.dropdown}>
+            {citySuggestions.map((name, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.dropdownItem, i < citySuggestions.length - 1 && styles.dropdownBorder]}
+                onPress={() => selectCity(name)}
+              >
+                <Text style={styles.dropdownText}>{name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>Category</Text>
       <View style={styles.categories}>
@@ -200,14 +253,22 @@ export default function Post() {
 
       <View style={{ height: 40 }} />
     </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  header: { fontSize: 28, fontWeight: 'bold', paddingTop: 60, marginBottom: 24 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 60, marginBottom: 24 },
+  header: { fontSize: 28, fontWeight: 'bold' },
+  cancelBtn: { fontSize: 16, color: '#999', paddingBottom: 4 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8, marginTop: 16 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 16 },
+  cityContainer: { position: 'relative', zIndex: 10 },
+  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, marginTop: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 },
+  dropdownItem: { padding: 14 },
+  dropdownBorder: { borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  dropdownText: { fontSize: 15, color: '#333' },
   textArea: { height: 100, textAlignVertical: 'top' },
   categories: { flexDirection: 'row', gap: 8 },
   categoryBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#ddd' },
