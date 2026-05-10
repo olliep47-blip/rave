@@ -73,7 +73,7 @@ export default function Notifications() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No notifications yet.</Text>
-            <Text style={styles.emptyHint}>You'll see it here when someone follows you.</Text>
+            <Text style={styles.emptyHint}>{"You'll see it here when someone follows you."}</Text>
           </View>
         }
       />

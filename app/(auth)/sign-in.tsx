@@ -18,7 +18,7 @@ export default function SignIn() {
       }
     }
     checkOnboarding()
-  }, [])
+  }, [router])
 
   async function handleSignIn() {
     setLoading(true)
@@ -54,7 +54,7 @@ export default function SignIn() {
       </TouchableOpacity>
 
       <Link href="/(auth)/sign-up" style={styles.link}>
-        Don't have an account? Sign up
+        {"Don't have an account? Sign up"}
       </Link>
     </View>
   )

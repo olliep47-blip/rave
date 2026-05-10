@@ -37,7 +37,7 @@ export default function Post() {
           return a.city || a.town || a.village || a.county || a.state || item.display_name.split(',')[0]
         }).filter((v: string, i: number, arr: string[]) => arr.indexOf(v) === i)
         setCitySuggestions(names)
-      } catch (e) {
+      } catch {
         setCitySuggestions([])
       }
     }, 400)
@@ -113,8 +113,8 @@ export default function Post() {
         latitude = geocoded[0].latitude
         longitude = geocoded[0].longitude
       }
-    } catch (e) {
-      console.log('Geocoding failed:', e)
+    } catch (error) {
+      console.log('Geocoding failed:', error)
     }
 
     const { error } = await supabase.from('posts').insert({

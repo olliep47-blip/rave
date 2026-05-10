@@ -9,27 +9,37 @@ export default function RootLayout() {
   const [initialized, setInitialized] = useState(false)
   const router = useRouter()
   const segments = useSegments()
+  const inAuthGroup = segments[0] === '(auth)'
+  const onOnboarding = segments[0] === 'onboarding'
 
   useEffect(() => {
+    let mounted = true
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
       setSession(session)
       setInitialized(true)
     })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
     if (!initialized) return
-    const inAuthGroup = segments[0] === '(auth)'
-    if (!session && !inAuthGroup) {
+
+    if (!session && !inAuthGroup && !onOnboarding) {
       router.replace('/(auth)/sign-in')
-    } else if (session && inAuthGroup) {
+    } else if (session && (inAuthGroup || onOnboarding)) {
       router.replace('/(tabs)')
     }
-  }, [session, initialized])
+  }, [session, initialized, inAuthGroup, onOnboarding, router])
 
   return <Stack screenOptions={{ headerShown: false }} />
 }
