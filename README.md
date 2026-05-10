@@ -1,50 +1,75 @@
-# Welcome to your Expo app 👋
+# Rave
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Rave is an Expo and React Native social app for discovering food, drink, and activity recommendations from people you trust. Users can post places, mark them as `Raved` or `Delisted`, follow other users, save places to a personal list, and browse recommendations by feed, map, city, or profile.
 
-## Get started
+## Quick Start
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Install dependencies from the lockfile:
 
 ```bash
-npm run reset-project
+npm ci
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Start the Expo dev server:
 
-## Learn more
+```bash
+npm start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Common launch targets:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm run ios
+npm run android
+npm run web
+```
 
-## Join the community
+Check the project before handing off changes:
 
-Join our community of developers creating universal apps.
+```bash
+npm run check
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+That runs ESLint and TypeScript in no-emit mode.
+
+## How The App Fits Together
+
+This app uses Expo Router. The `app/` directory is the route tree:
+
+- `app/_layout.tsx` is the root stack layout. It loads the Supabase auth session and redirects signed-out users to sign-in, while allowing the onboarding and auth routes to stay public.
+- `app/(auth)/sign-in.tsx` and `app/(auth)/sign-up.tsx` handle email/password auth through Supabase.
+- `app/onboarding.tsx` is the first-run intro screen. It stores `hasSeenOnboarding` in `AsyncStorage`.
+- `app/(tabs)/_layout.tsx` defines the signed-in tab bar.
+- `app/(tabs)/index.tsx` is the feed of posts from the current user and followed users.
+- `app/(tabs)/post.tsx` creates a new rave, uploads photos, geocodes the place, and inserts the post.
+- `app/(tabs)/explore.tsx` shows a map of network posts with coordinates.
+- `app/(tabs)/profile.tsx` shows the current user's profile, counts, cities, posts, avatar upload, bio editing, and saved-list entry point.
+- Stack screens such as `app/post-detail.tsx`, `app/city.tsx`, `app/search.tsx`, `app/user-profile.tsx`, `app/saved.tsx`, and `app/notifications.tsx` are opened from the tabs.
+
+Shared pieces live outside `app/`:
+
+- `lib/supabase.js` creates the Supabase client and persists auth sessions in `AsyncStorage`.
+- `constants/theme.ts` contains Rave's color, radius, spacing, font, and shadow tokens.
+- `components/CategoryIcon.tsx` maps `eat`, `drink`, and `do` categories to Ionicons.
+- `hooks/` and the remaining `components/` files are mostly Expo starter helpers, kept compiling for any screens that still import them.
+
+For a deeper route and data walkthrough, see [docs/architecture.md](docs/architecture.md).
+
+## Backend Expectations
+
+The app expects a Supabase project with these tables and storage buckets:
+
+- `profiles`: user profile rows keyed by auth user id, including `username`, `avatar_url`, and `bio`.
+- `posts`: place recommendations with `user_id`, `venue_name`, `city`, `category`, `content`, `on_list`, `photo_urls`, `latitude`, `longitude`, and timestamps.
+- `follows`: follower/following relationships.
+- `saves`: saved posts for each user.
+- `notifications`: currently used for follow notifications.
+- Storage buckets: `avatars` and `posts`.
+
+The Supabase anon key in `lib/supabase.js` is a public client key, not a service key. Row Level Security policies still need to protect private or user-owned data.
+
+## Library Documentation
+
+Context7 is configured in `.mcp.json` so agents can fetch current library docs before changing fast-moving APIs. See [AGENTS.md](AGENTS.md) for the project rule.
+
+Developers who need higher Context7 limits can set `CONTEXT7_API_KEY` in their local environment before their MCP client starts.
