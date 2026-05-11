@@ -1,9 +1,9 @@
 import * as Location from 'expo-location'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import CategoryIcon from '../components/CategoryIcon'
-import MapView, { Callout, Marker } from 'react-native-maps'
+import { Callout, MapView, Marker } from '../components/RaveMap'
 import { supabase } from '../lib/supabase'
 
 const { height } = Dimensions.get('window')
@@ -16,7 +16,7 @@ export default function City() {
   const [activeFilter, setActiveFilter] = useState('All')
   const router = useRouter()
 
-  async function setMapRegion(data: any[]) {
+  const setMapRegion = useCallback(async (data: any[]) => {
     const withCoords = data.filter(p => p.latitude && p.longitude)
     if (withCoords.length > 0) {
       setRegion({
@@ -36,13 +36,13 @@ export default function City() {
             longitudeDelta: 0.1,
           })
         }
-      } catch (e) {
-        console.log('City geocode failed:', e)
+      } catch (error) {
+        console.log('City geocode failed:', error)
       }
     }
-  }
+  }, [name])
 
-  async function fetchCityPosts(everyone: boolean) {
+  const fetchCityPosts = useCallback(async (everyone: boolean) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -83,7 +83,7 @@ export default function City() {
               const idx = updated.findIndex(p => p.id === post.id)
               if (idx !== -1) updated[idx] = { ...updated[idx], latitude: lat, longitude: lng }
             }
-          } catch (e) {
+          } catch {
             console.log('Geocode failed for', post.venue_name)
           }
         }
@@ -91,9 +91,9 @@ export default function City() {
         setMapRegion(updated)
       }
     }
-  }
+  }, [name, setMapRegion])
 
-  useEffect(() => { fetchCityPosts(showAll) }, [name, showAll])
+  useEffect(() => { fetchCityPosts(showAll) }, [fetchCityPosts, showAll])
 
   const filteredPosts = activeFilter === 'All'
     ? posts

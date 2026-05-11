@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActionSheetIOS, Alert, FlatList, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import CategoryIcon from '../../components/CategoryIcon'
-import { Colors, Fonts, Radius, Shadow, Spacing } from '../../constants/theme'
+import { Colors, Fonts, Radius, Spacing } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 
 export default function Feed() {

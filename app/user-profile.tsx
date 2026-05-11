@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { supabase } from '../lib/supabase'
 
@@ -13,9 +13,7 @@ export default function UserProfile() {
   const [currentUserId, setCurrentUserId] = useState('')
   const router = useRouter()
 
-  useEffect(() => { fetchAll() }, [id])
-
-  async function fetchAll() {
+  const fetchAll = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     setCurrentUserId(user.id)
@@ -54,7 +52,9 @@ export default function UserProfile() {
     setFollowerCount(followers || 0)
     setFollowingCount(following || 0)
     setIsFollowing(!!followCheck)
-  }
+  }, [id])
+
+  useEffect(() => { fetchAll() }, [fetchAll])
 
   async function toggleFollow() {
     if (isFollowing) {
