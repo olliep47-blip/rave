@@ -1,13 +1,12 @@
 import { useRouter } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import MapView, { Callout, Marker } from 'react-native-maps'
+import { Callout, MapView, Marker } from '../../components/RaveMap'
 import { supabase } from '../../lib/supabase'
 
 export default function Explore() {
   const [posts, setPosts] = useState<any[]>([])
   const router = useRouter()
-  const mapRef = useRef<MapView>(null)
 
   useEffect(() => {
     async function fetchPosts() {
@@ -42,7 +41,6 @@ export default function Explore() {
       </View>
 
       <MapView
-        ref={mapRef}
         style={styles.map}
         initialRegion={{
           latitude: 30,

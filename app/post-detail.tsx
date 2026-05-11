@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActionSheetIOS, Alert, Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import MapView, { Marker } from 'react-native-maps'
+import { MapView, Marker } from '../components/RaveMap'
 import { supabase } from '../lib/supabase'
 
 const { width } = Dimensions.get('window')

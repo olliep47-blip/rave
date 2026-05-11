@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import CategoryIcon from '../components/CategoryIcon'
-import MapView, { Callout, Marker } from 'react-native-maps'
+import { Callout, MapView, Marker } from '../components/RaveMap'
 import { supabase } from '../lib/supabase'
 
 const { height } = Dimensions.get('window')
